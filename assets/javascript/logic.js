@@ -155,4 +155,6 @@ database.ref().on("child_added", function (childSnap) {
 
     $("#train-table > tbody").append(newRow);
 
+    $("#last-update").text(moment().format("HH:mm"));
+
 })
