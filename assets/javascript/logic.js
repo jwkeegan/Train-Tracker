@@ -79,40 +79,49 @@ function minutesToTime(minutes) {
 function lastTrain(trainFirst, frequency) {
 
     // Calculate next Train time and Minutes away
-    var time = new Date();
-    time = time.getHours() + ":" + time.getMinutes();
+    var currentTime = moment();
+	console.log("TCL: lastTrain -> currentTime", currentTime)
+    var trainFirstConverted = moment(trainFirst, "HH:mm");
+	console.log("TCL: lastTrain -> trainFirstConverted", trainFirstConverted)
 
-    // convert hh:mm to minutes into the day
-    time = timeToMinutes(time);
-    trainFirst = timeToMinutes(trainFirst);
+    // Difference between times
+    var diffTime = moment().diff(moment(trainFirstConverted), "minutes");
+	console.log("TCL: lastTrain -> diffTime", diffTime)
 
     var minAway;
 
     // make sure current time is after first train
-    if (time > trainFirst) {
+    if (diffTime > 0) {
 
         // last train came in (time difference modulo frequency) minutes ago
-        var trainLast = (time - trainFirst) % frequency;
+        var trainLast = diffTime % frequency;
+		console.log("TCL: lastTrain -> trainLast", trainLast)
 
         // minutes away is difference between frequency and last time
         minAway = frequency - trainLast;
+		console.log("TCL: lastTrain -> minAway", minAway)
 
         // arrival time is current time + minutes away. Then we convert to military time
-        var arrivalTime = time + minAway;
-        arrivalTime = minutesToTime(arrivalTime);
+        var arrivalTime = moment().add(minAway, "minutes");
+		console.log("TCL: lastTrain -> arrivalTime", arrivalTime)
 
-        // if arrival time is past midnight, train will arrive tomorrow
-        if (arrivalTime.split(":")[0] >= 24) {
-            arrivalTime = minutesToTime(trainFirst) + " (tomorrow)";
-            minAway = 1440 - (time - trainFirst);
+        // if arrival date is past midnight (day advances), train will arrive at start time tomorrow
+        if (moment(arrivalTime, "HH:mm").date() > moment().date()) {
+            arrivalTime = trainFirst;
+            minAway = moment(arrivalTime, "HH:mm").diff(moment(), "minutes") + 1440;
+        }
+
+        // otherwise just change format to only show time
+        else {
+            arrivalTime = moment(arrivalTime).format("HH:mm");
         }
 
     }
 
     // if it is before current train, then arrival is first train
     else {
-        arrivalTime = minutesToTime(trainFirst);
-        minAway = trainFirst-time;
+        arrivalTime = moment(trainFirstConverted).format("HH:mm");
+        minAway = moment(arrivalTime, "HH:mm").diff(moment(), "minutes");
     }
 
     return [arrivalTime, minAway];
